@@ -331,12 +331,6 @@ R: Pode variar de minutos a horas, dependendo do tamanho total dos dados.
 **P: Preciso deixar o PowerShell aberto durante a exportação?**
 R: Não. Após criar a pesquisa, você pode fechar. A exportação pelo portal é independente.
 
-## 📞 Suporte
-
-Para questões sobre:
-- **Permissões:** Contate o administrador do Microsoft 365
-- **Funcionalidade do script:** Consulte esta documentação
-- **Erros de execução:** Veja a seção Troubleshooting
 
 ---
 
