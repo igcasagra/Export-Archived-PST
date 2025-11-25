@@ -130,7 +130,7 @@ function Test-ArchiveMailboxExists {
                 Write-Host "  Total de itens no arquivo: $itemCount" -ForegroundColor Cyan
             }
             catch {
-                Write-Host "  ⚠️  Não foi possível obter estatísticas detalhadas" -ForegroundColor Yellow
+                Write-Host "  Não foi possível obter estatísticas detalhadas" -ForegroundColor Yellow
             }
             
             return $true
@@ -166,7 +166,7 @@ function Get-ArchiveMailboxFolders {
         
         foreach ($folder in $mainFolders) {
             Write-Host ""
-            Write-Host "📧 $($folder.Name)" -ForegroundColor Yellow
+            Write-Host "$($folder.Name)" -ForegroundColor Yellow
             Write-Host "   Caminho: $($folder.FolderPath)" -ForegroundColor Gray
             Write-Host "   Itens: $($folder.ItemsInFolder)" -ForegroundColor Gray
             Write-Host "   Tamanho: $($folder.FolderSize)" -ForegroundColor Gray
@@ -190,7 +190,7 @@ function Get-ArchiveMailboxFolders {
         
         foreach ($folder in $folders) {
             Write-Host ""
-            Write-Host "📁 $($folder.Name)" -ForegroundColor White
+            Write-Host "$($folder.Name)" -ForegroundColor White
             Write-Host "   Caminho: $($folder.FolderPath)" -ForegroundColor Gray
             Write-Host "   Itens: $($folder.ItemsInFolder)" -ForegroundColor Gray
             Write-Host "   Tamanho: $($folder.FolderSize)" -ForegroundColor Gray
@@ -219,7 +219,7 @@ function Export-ArchiveUsingComplianceSearch {
     Write-Host "║  Compliance Search - Criação de Pesquisa Filtrada             ║" -ForegroundColor Cyan
     Write-Host "╚════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
     
-    Write-Host "`n⚠️  Este método:" -ForegroundColor Yellow
+    Write-Host "`nEste método:" -ForegroundColor Yellow
     Write-Host "   • Cria a pesquisa automaticamente com filtros de data" -ForegroundColor Gray
     Write-Host "   • Exportação deve ser feita manualmente no portal" -ForegroundColor Gray
     Write-Host "   • Requer: eDiscovery Manager ou Compliance Administrator" -ForegroundColor Gray
@@ -240,7 +240,7 @@ function Export-ArchiveUsingComplianceSearch {
         
         # Cria pesquisa incluindo APENAS o arquivo morto (não a caixa principal)
         # Usar o formato especial: usuario@dominio.onmicrosoft.com (Archive)
-        Write-Host "⚠️  Configurando pesquisa com filtros..." -ForegroundColor Yellow
+        Write-Host "Configurando pesquisa com filtros..." -ForegroundColor Yellow
         
         # Monta o filtro de busca
         # IMPORTANTE: Busca em toda caixa (principal + arquivo morto juntos)
@@ -251,15 +251,15 @@ function Export-ArchiveUsingComplianceSearch {
         if ($OlderThanDays -gt 0) {
             $dateLimit = (Get-Date).AddDays(-$OlderThanDays).ToString("yyyy-MM-dd")
             $searchQuery += " AND received<$dateLimit"
-            Write-Host "  📅 Filtrando mensagens mais antigas que $OlderThanDays dias (antes de $dateLimit)" -ForegroundColor Cyan
+            Write-Host "  Filtrando mensagens mais antigas que $OlderThanDays dias (antes de $dateLimit)" -ForegroundColor Cyan
         }
         elseif ($StartDate -and $EndDate) {
             $searchQuery += " AND received>=$StartDate AND received<=$EndDate"
-            Write-Host "  📅 Filtrando mensagens entre $StartDate e $EndDate" -ForegroundColor Cyan
+            Write-Host "  Filtrando mensagens entre $StartDate e $EndDate" -ForegroundColor Cyan
         }
         
-        Write-Host "  🔍 Query de busca: $searchQuery" -ForegroundColor Gray
-        Write-Host "  ⚠️  AVISO: Compliance Search busca em TODA caixa (principal + arquivo)" -ForegroundColor Yellow
+        Write-Host "  Query de busca: $searchQuery" -ForegroundColor Gray
+        Write-Host "  AVISO: Compliance Search busca em TODA caixa (principal + arquivo)" -ForegroundColor Yellow
         Write-Host "             Para exportar SOMENTE arquivo morto, use -Method PST" -ForegroundColor Yellow
         
         # Cria pesquisa em toda a caixa de correio (não há como separar apenas arquivo morto)
@@ -290,9 +290,9 @@ function Export-ArchiveUsingComplianceSearch {
         Write-Host ""
         Write-Host "╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Green
         Write-Host "║  PESQUISA CRIADA COM SUCESSO!                                  ║" -ForegroundColor Green
-        Write-Host "╚════════════════════════════════════════════════════════════════╝" -ForegroundColor Green
+        Write-Host "═══════════════════════════════════════════════════════════════╝" -ForegroundColor Green
         Write-Host ""
-        Write-Host "📋 Nome da pesquisa: " -NoNewline -ForegroundColor Cyan
+        Write-Host "Nome da pesquisa: " -NoNewline -ForegroundColor Cyan
         Write-Host "$searchName" -ForegroundColor Yellow
         Write-Host ""
         Write-Host "╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
@@ -318,7 +318,7 @@ function Export-ArchiveUsingComplianceSearch {
         Write-Host "6. Após preparar a exportação, baixe usando o " -NoNewline -ForegroundColor White
         Write-Host "'eDiscovery Export Tool'" -ForegroundColor Yellow
         Write-Host ""
-        Write-Host "ℹ️  Nota: A exportação via PowerShell foi descontinuada pela Microsoft" -ForegroundColor DarkGray
+        Write-Host "Nota: A exportação via PowerShell foi descontinuada pela Microsoft" -ForegroundColor DarkGray
         Write-Host "   em maio de 2025. Agora é necessário exportar pelo portal." -ForegroundColor DarkGray
         Write-Host ""
         
@@ -337,38 +337,38 @@ function Show-ArchiveExportInfo {
     Write-Host "║          MÉTODOS DE EXPORTAÇÃO DE ARQUIVO MORTO                ║" -ForegroundColor Cyan
     Write-Host "╚════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "📋 MÉTODOS DISPONÍVEIS:" -ForegroundColor White
+    Write-Host "MÉTODOS DISPONÍVEIS:" -ForegroundColor White
     Write-Host ""
-    Write-Host "1️⃣  NEW-MAILBOXEXPORTREQUEST (PST) - Método Oficial" -ForegroundColor Cyan
-    Write-Host "   ✅ Exporta diretamente para PST" -ForegroundColor Green
-    Write-Host "   ✅ Preserva estrutura de pastas" -ForegroundColor Green
-    Write-Host "   ❌ Requer permissão 'Mailbox Import Export'" -ForegroundColor Red
-    Write-Host "   ❌ Requer caminho UNC (compartilhamento de rede)" -ForegroundColor Red
+    Write-Host "1. NEW-MAILBOXEXPORTREQUEST (PST) - Método Oficial" -ForegroundColor Cyan
+    Write-Host "   ✓ Exporta diretamente para PST" -ForegroundColor Green
+    Write-Host "   ✓ Preserva estrutura de pastas" -ForegroundColor Green
+    Write-Host "   X Requer permissão 'Mailbox Import Export'" -ForegroundColor Red
+    Write-Host "   X Requer caminho UNC (compartilhamento de rede)" -ForegroundColor Red
     Write-Host ""
     Write-Host "   Comando:" -ForegroundColor White
     Write-Host "   .\Export-ArchiveMailbox-EXO.ps1 -Mailbox 'user@contoso.com' -ExportPath '\\\\servidor\\share' -Method PST" -ForegroundColor Gray
     Write-Host ""
-    Write-Host "2️⃣  COMPLIANCE SEARCH (eDiscovery) - Criação de Pesquisa" -ForegroundColor Cyan
-    Write-Host "   ✅ Cria pesquisa automaticamente com filtros" -ForegroundColor Green
-    Write-Host "   ✅ Suporta filtros de data avançados" -ForegroundColor Green
-    Write-Host "   ⚠️  Exportação manual pelo portal (Microsoft Purview)" -ForegroundColor Yellow
-    Write-Host "   ⚠️  Busca em TODA caixa (principal + arquivo morto junto)" -ForegroundColor Yellow
-    Write-Host "   ❌ Requer permissão eDiscovery Manager" -ForegroundColor Red
+    Write-Host "2. COMPLIANCE SEARCH (eDiscovery) - Criação de Pesquisa" -ForegroundColor Cyan
+    Write-Host "   ✓ Cria pesquisa automaticamente com filtros" -ForegroundColor Green
+    Write-Host "   ✓ Suporta filtros de data avançados" -ForegroundColor Green
+    Write-Host "   ! Exportação manual pelo portal (Microsoft Purview)" -ForegroundColor Yellow
+    Write-Host "   ! Busca em TODA caixa (principal + arquivo morto junto)" -ForegroundColor Yellow
+    Write-Host "   X Requer permissão eDiscovery Manager" -ForegroundColor Red
     Write-Host ""
     Write-Host "   Comando:" -ForegroundColor White
     Write-Host "   .\Export-ArchiveMailbox-EXO.ps1 -Mailbox 'user@contoso.com' -ExportPath 'C:\Export' -Method SearchExport -OlderThanDays 365" -ForegroundColor Gray
     Write-Host "   (Cria a pesquisa, exportação manual no portal)" -ForegroundColor DarkGray
     Write-Host ""
-    Write-Host "3️⃣  GRAPH API (EML) - Via outro script" -ForegroundColor Cyan
-    Write-Host "   ✅ Não requer permissões especiais" -ForegroundColor Green
-    Write-Host "   ✅ Autenticação interativa" -ForegroundColor Green
-    Write-Host "   ⚠️  Limitado a 1000 itens por vez" -ForegroundColor Yellow
-    Write-Host "   ⚠️  Não acessa arquivo morto diretamente" -ForegroundColor Yellow
+    Write-Host "3. GRAPH API (EML) - Via outro script" -ForegroundColor Cyan
+    Write-Host "   ✓ Não requer permissões especiais" -ForegroundColor Green
+    Write-Host "   ✓ Autenticação interativa" -ForegroundColor Green
+    Write-Host "   ! Limitado a 1000 itens por vez" -ForegroundColor Yellow
+    Write-Host "   ! Não acessa arquivo morto diretamente" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "   Use o script: Export-ArchiveMailbox.ps1" -ForegroundColor Gray
     Write-Host ""
     Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-    Write-Host "💡 RECOMENDAÇÃO:" -ForegroundColor Yellow
+    Write-Host "RECOMENDAÇÃO:" -ForegroundColor Yellow
     Write-Host "   Para exportar APENAS o arquivo morto:" -ForegroundColor White
     Write-Host "   → Use o Método 1 (PST) ou Método 2 (Compliance Search)" -ForegroundColor White
     Write-Host ""
