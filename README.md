@@ -27,22 +27,36 @@ O script `Export-ArchiveMailbox-EXO.ps1` permite criar pesquisas de Compliance (
 
 ## 🎯 Como Atribuir Permissões
 
-### Opção 1: Usar Script Automatizado (Recomendado)
+### Opção 1: Usar Script Automatizado (Recomendado) ⭐
 
 Execute o script de configuração de permissões:
 
+#### **Modo Interativo (Mais Fácil)**
+```powershell
+.\Configure-eDiscoveryPermissions.ps1
+```
+O script irá solicitar o email do usuário interativamente.
+
+#### **Modo com Parâmetros**
 ```powershell
 .\Configure-eDiscoveryPermissions.ps1 -UserEmail "admin@contoso.com"
 ```
 
 **Parâmetros:**
-- `-UserEmail`: Email do usuário que receberá as permissões
+- `-UserEmail`: Email do usuário que receberá as permissões (se não informado, será solicitado)
 - `-RoleGroup`: (Opcional) `eDiscoveryManager` (padrão) ou `eDiscoveryAdministrator`
 
 **Exemplo com Administrator:**
 ```powershell
 .\Configure-eDiscoveryPermissions.ps1 -UserEmail "admin@contoso.com" -RoleGroup "eDiscoveryAdministrator"
 ```
+
+**O que o script faz:**
+- ✅ Valida o formato do email
+- ✅ Verifica se o usuário existe no tenant
+- ✅ Solicita confirmação antes de aplicar as permissões
+- ✅ Atribui o grupo de permissões correto
+- ✅ Exibe um resumo das permissões configuradas
 
 **Requisitos para executar o script:**
 - Permissões de Administrador Global ou Compliance Administrator
@@ -100,6 +114,76 @@ Execute o script de configuração de permissões:
 ```
 
 ## 🔄 Fluxo de Trabalho Completo
+
+### 🔐 Etapa 0: Configurar Permissões (Primeira Vez)
+
+Execute o script de permissões em modo interativo:
+
+```powershell
+.\Configure-eDiscoveryPermissions.ps1
+```
+
+**O que acontece:**
+
+```
+╔═══════════════════════════════════════════════════════════════════╗
+║       Configuração de Permissões eDiscovery Manager              ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+📧 INFORMAR USUÁRIO
+Por favor, informe o email do usuário que receberá as permissões de eDiscovery.
+
+Email do usuário: admin@contoso.com
+✓ Email válido: admin@contoso.com
+
+⚠️  CONFIRMAÇÃO
+╔═══════════════════════════════════════════════════════════════════╗
+║  As seguintes permissões serão atribuídas:                       ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+   👤 Usuário: admin@contoso.com
+   🔐 Grupo de Permissão: eDiscoveryManager
+
+   Permissões concedidas:
+   • Criar e gerenciar suas próprias pesquisas de conteúdo
+   • Exportar resultados de pesquisas criadas pelo usuário
+   • Acessar o portal do Microsoft Purview
+
+Deseja continuar? (S/N): S
+
+Conectando ao Microsoft Purview (Security & Compliance)...
+✓ Conectado com sucesso ao Compliance Center
+
+🔍 Verificando usuário admin@contoso.com...
+✓ Usuário encontrado!
+   Nome: Administrador
+   UPN: admin@contoso.com
+
+🔐 Atribuindo permissões...
+   Adicionando ao grupo: eDiscoveryManager
+✓ Permissões atribuídas com sucesso!
+
+╔═══════════════════════════════════════════════════════════════════╗
+║                 PERMISSÕES CONFIGURADAS                           ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+Usuário: Administrador (admin@contoso.com)
+
+Grupos de Função:
+  ✓ eDiscovery Manager
+
+Próximos Passos:
+  1. Usuário deve aguardar ~15 minutos para propagação de permissões
+  2. Fazer logout e login novamente no Microsoft 365
+  3. Acessar: https://purview.microsoft.com/contentsearch
+  4. Executar: .\Export-ArchiveMailbox-EXO.ps1 -Mailbox <email> -OlderThanDays 730
+
+✅ CONFIGURAÇÃO CONCLUÍDA COM SUCESSO!
+```
+
+> 💡 **Dica:** Aguarde 15 minutos após configurar as permissões antes de executar o script de exportação.
+
+---
 
 ### Passo 1: Executar o Script
 ```powershell
