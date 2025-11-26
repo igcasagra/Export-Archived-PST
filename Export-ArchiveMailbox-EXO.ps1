@@ -11,14 +11,17 @@
     A exportação final é feita manualmente pelo portal.
     
     O script oferece duas formas de uso:
-    - Modo interativo: Exibe TOP 10 mailboxes com maior uso ou permite digitar email
+    - Modo interativo: Exibe TOP N mailboxes com maior uso ou permite digitar email
     - Modo direto: Especifica a mailbox via parâmetro
 
 .PARAMETER Mailbox
     Email da caixa de correio que possui arquivo morto (opcional se usar -ShowTop10)
 
 .PARAMETER ShowTop10
-    Exibe as TOP 10 mailboxes com maior percentual de uso do arquivo morto
+    Exibe as TOP N mailboxes com maior percentual de uso do arquivo morto
+
+.PARAMETER TopN
+    Número de mailboxes a exibir no ranking (padrão: 10, máximo: 50)
 
 .PARAMETER OlderThanDays
     Filtrar apenas mensagens mais antigas que X dias (exemplo: 730 para mais de 2 anos)
@@ -34,8 +37,16 @@
     Exibe TOP 10 mailboxes com maior uso e permite selecionar
 
 .EXAMPLE
+    .\Export-ArchiveMailbox-EXO.ps1 -ShowTop10 -TopN 5
+    Exibe TOP 5 mailboxes com maior uso
+
+.EXAMPLE
+    .\Export-ArchiveMailbox-EXO.ps1 -ShowTop10 -TopN 15
+    Exibe TOP 15 mailboxes com maior uso
+
+.EXAMPLE
     .\Export-ArchiveMailbox-EXO.ps1
-    Modo interativo: oferece opções de visualizar TOP 10 ou digitar email
+    Modo interativo: oferece opções de visualizar TOP N ou digitar email
 
 .EXAMPLE
     .\Export-ArchiveMailbox-EXO.ps1 -Mailbox "usuario@contoso.com" -OlderThanDays 730
@@ -58,6 +69,10 @@ param(
     
     [Parameter(Mandatory=$false)]
     [switch]$ShowTop10,
+    
+    [Parameter(Mandatory=$false)]
+    [ValidateRange(1, 50)]
+    [int]$TopN = 10,
     
     [Parameter(Mandatory=$false)]
     [int]$OlderThanDays = 0,
@@ -116,8 +131,10 @@ function Connect-ToExchangeOnline {
     }
 }
 
-# Função para listar TOP 10 mailboxes com maior uso de espaço
-function Get-Top10MailboxesByUsage {
+# Função para listar TOP N mailboxes com maior uso de espaço
+function Get-TopMailboxesByUsage {
+    param([int]$Top = 10)
+    
     Write-Host "`nBuscando mailboxes com arquivo morto ativo..." -ForegroundColor Cyan
     Write-Host "Isso pode levar alguns minutos..." -ForegroundColor Yellow
     
@@ -243,10 +260,10 @@ function Get-Top10MailboxesByUsage {
         
         Write-Progress -Activity "Coletando estatísticas" -Completed
         
-        # Ordena por percentual de uso do arquivo e pega TOP 10
-        $top10 = $mailboxStats | Sort-Object ArchivePercentUsed -Descending | Select-Object -First 10
+        # Ordena por percentual de uso do arquivo e pega TOP N
+        $topMailboxes = $mailboxStats | Sort-Object ArchivePercentUsed -Descending | Select-Object -First $Top
         
-        return $top10
+        return $topMailboxes
     }
     catch {
         Write-Error "Erro ao buscar mailboxes: $_"
@@ -263,8 +280,12 @@ function Show-MailboxSelectionMenu {
         return $null
     }
     
+    $title = "TOP $($Mailboxes.Count) MAILBOXES COM MAIOR USO DE ARQUIVO MORTO"
+    $titlePadding = [Math]::Max(0, (127 - $title.Length) / 2)
+    $paddedTitle = (" " * $titlePadding) + $title
+    
     Write-Host "`n╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "║                              TOP 10 MAILBOXES COM MAIOR USO DE ARQUIVO MORTO                                                 ║" -ForegroundColor Cyan
+    Write-Host "║$($paddedTitle.PadRight(127))║" -ForegroundColor Cyan
     Write-Host "╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "ARQUIVO MORTO:" -ForegroundColor Yellow
@@ -632,7 +653,7 @@ if (-not (Connect-ToExchangeOnline)) {
 # Se não foi fornecido mailbox e não foi solicitado ShowTop10, pergunta ao usuário
 if ([string]::IsNullOrWhiteSpace($Mailbox) -and -not $ShowTop10) {
     Write-Host "Escolha uma opção:" -ForegroundColor Yellow
-    Write-Host "  1. Mostrar TOP 10 mailboxes com maior uso" -ForegroundColor White
+    Write-Host "  1. Mostrar TOP $TopN mailboxes com maior uso" -ForegroundColor White
     Write-Host "  2. Digitar email da mailbox manualmente" -ForegroundColor White
     Write-Host ""
     Write-Host "Opção (1 ou 2): " -NoNewline -ForegroundColor Yellow
@@ -653,14 +674,14 @@ if ([string]::IsNullOrWhiteSpace($Mailbox) -and -not $ShowTop10) {
 
 # Se ShowTop10 foi solicitado, busca e exibe as mailboxes
 if ($ShowTop10) {
-    $top10Mailboxes = Get-Top10MailboxesByUsage
+    $topMailboxes = Get-TopMailboxesByUsage -Top $TopN
     
-    if ($top10Mailboxes.Count -eq 0) {
+    if ($topMailboxes.Count -eq 0) {
         Write-Host "Nenhuma mailbox com arquivo morto encontrada." -ForegroundColor Yellow
         exit 1
     }
     
-    $Mailbox = Show-MailboxSelectionMenu -Mailboxes $top10Mailboxes
+    $Mailbox = Show-MailboxSelectionMenu -Mailboxes $topMailboxes
     
     if ([string]::IsNullOrWhiteSpace($Mailbox)) {
         Write-Host "Nenhuma mailbox selecionada." -ForegroundColor Yellow
@@ -672,7 +693,7 @@ if ($ShowTop10) {
 if ([string]::IsNullOrWhiteSpace($Mailbox)) {
     Write-Host "Erro: Nenhuma mailbox especificada!" -ForegroundColor Red
     Write-Host "Use: .\Export-ArchiveMailbox-EXO.ps1 -Mailbox 'email@dominio.com'" -ForegroundColor Yellow
-    Write-Host "Ou:  .\Export-ArchiveMailbox-EXO.ps1 -ShowTop10" -ForegroundColor Yellow
+    Write-Host "Ou:  .\Export-ArchiveMailbox-EXO.ps1 -ShowTop10 -TopN 15" -ForegroundColor Yellow
     exit 1
 }
 
