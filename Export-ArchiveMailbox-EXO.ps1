@@ -37,11 +37,11 @@
     Exibe TOP 10 mailboxes com maior uso e permite selecionar
 
 .EXAMPLE
-    .\Export-ArchiveMailbox-EXO.ps1 -ShowTop10 -TopN 5
+    .\Export-ArchiveMailbox-EXO.ps1 -TopN 5
     Exibe TOP 5 mailboxes com maior uso
 
 .EXAMPLE
-    .\Export-ArchiveMailbox-EXO.ps1 -ShowTop10 -TopN 15
+    .\Export-ArchiveMailbox-EXO.ps1  -TopN 15
     Exibe TOP 15 mailboxes com maior uso
 
 .EXAMPLE
@@ -192,12 +192,13 @@ function Get-TopMailboxesByUsage {
                     }
                     
                     # Extrai quota do ARQUIVO MORTO em GB
-                    # Se for "Unlimited", considera 1.5TB (1536 GB) para Exchange Plan 2
+                    # Para Exchange Plan 2 com auto-expanding, não há limite fixo
                     $archiveQuotaGB = 0
                     $isAutoExpanding = $false
                     
                     if ($mbx.ArchiveQuota -match 'Unlimited' -or $mbx.ArchiveQuota -match '1\.5 TB') {
-                        $archiveQuotaGB = 1536  # 1.5 TB para auto-expanding archives (Exchange Plan 2)
+                        # Exchange Plan 2: auto-expanding, sem limite fixo
+                        $archiveQuotaGB = 0  # 0 indica unlimited
                         $isAutoExpanding = $true
                     }
                     elseif ($mbx.ArchiveQuota -match '(\d+\.?\d*)\s*([KMGT]?B)') {
@@ -210,6 +211,12 @@ function Get-TopMailboxesByUsage {
                             'GB' { $archiveQuotaGB = $qSize }
                             'TB' { $archiveQuotaGB = $qSize * 1024 }
                             default { $archiveQuotaGB = 100 }
+                        }
+                        
+                        # Se o tamanho do arquivo é maior que a quota, é auto-expanding
+                        if ($archiveSizeMB / 1024 -gt $archiveQuotaGB) {
+                            $archiveQuotaGB = 0
+                            $isAutoExpanding = $true
                         }
                     }
                     else {
@@ -234,7 +241,14 @@ function Get-TopMailboxesByUsage {
                         $primaryQuotaGB = 50  # default quota
                     }
                     
-                    $archivePercentUsed = if ($archiveQuotaGB -gt 0) { ($archiveSizeMB / 1024) / $archiveQuotaGB * 100 } else { 0 }
+                    $archivePercentUsed = if ($archiveQuotaGB -gt 0) { 
+                        ($archiveSizeMB / 1024) / $archiveQuotaGB * 100 
+                    } elseif ($isAutoExpanding) { 
+                        # Para auto-expanding, mostra 0% pois não há limite
+                        0 
+                    } else { 
+                        0 
+                    }
                     $primaryPercentUsed = if ($primaryQuotaGB -gt 0) { ($primarySizeMB / 1024) / $primaryQuotaGB * 100 } else { 0 }
                     
                     $mailboxStats += [PSCustomObject]@{
@@ -315,7 +329,7 @@ function Show-MailboxSelectionMenu {
         
         # Mostra quota do arquivo com indicador se for auto-expanding
         if ($mbx.IsAutoExpanding) {
-            Write-Host ("{0,8} TB" -f ([math]::Round($mbx.ArchiveQuotaGB / 1024, 1))) -NoNewline -ForegroundColor DarkCyan
+            Write-Host "   Unlimited" -NoNewline -ForegroundColor DarkCyan
         }
         else {
             Write-Host ("{0,8} GB" -f $mbx.ArchiveQuotaGB) -NoNewline -ForegroundColor Gray
@@ -331,7 +345,7 @@ function Show-MailboxSelectionMenu {
     }
     
     Write-Host ""
-    Write-Host "Legenda: [Plan2] = Exchange Plan 2 com auto-expanding archive (até 1.5 TB)" -ForegroundColor DarkGray
+    Write-Host "Legenda: [Plan2] = Exchange Plan 2 com auto-expanding archive (Unlimited)" -ForegroundColor DarkGray
     Write-Host ""
     Write-Host "Digite o número da mailbox (1-$($Mailboxes.Count)) ou 0 para digitar email manualmente: " -NoNewline -ForegroundColor Yellow
     
@@ -650,6 +664,11 @@ if (-not (Connect-ToExchangeOnline)) {
     exit 1
 }
 
+# Se TopN foi especificado (diferente do padrão ou ShowTop10 foi usado), ativa ShowTop10 automaticamente
+if ($PSBoundParameters.ContainsKey('TopN') -or $ShowTop10) {
+    $ShowTop10 = $true
+}
+
 # Se não foi fornecido mailbox e não foi solicitado ShowTop10, pergunta ao usuário
 if ([string]::IsNullOrWhiteSpace($Mailbox) -and -not $ShowTop10) {
     Write-Host "Escolha uma opção:" -ForegroundColor Yellow
@@ -700,6 +719,23 @@ if ([string]::IsNullOrWhiteSpace($Mailbox)) {
 Write-Host "`n╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Green
 Write-Host "║  Mailbox selecionada: $($Mailbox.PadRight(45))" -ForegroundColor Green
 Write-Host "╚════════════════════════════════════════════════════════════════╝" -ForegroundColor Green
+
+# Se veio do menu TOP N e OlderThanDays não foi especificado, pergunta ao usuário
+if ($ShowTop10 -and -not $PSBoundParameters.ContainsKey('OlderThanDays') -and -not $PSBoundParameters.ContainsKey('StartDate') -and -not $PSBoundParameters.ContainsKey('EndDate')) {
+    Write-Host ""
+    Write-Host "Deseja filtrar emails por idade?" -ForegroundColor Yellow
+    Write-Host "Digite o número de dias (ex: 365 para emails mais antigos que 1 ano)" -ForegroundColor White
+    Write-Host "Ou pressione ENTER para exportar todos os emails: " -NoNewline -ForegroundColor Yellow
+    $daysInput = Read-Host
+    
+    if (-not [string]::IsNullOrWhiteSpace($daysInput) -and $daysInput -match '^\d+$') {
+        $OlderThanDays = [int]$daysInput
+        Write-Host "✓ Filtro aplicado: emails mais antigos que $OlderThanDays dias" -ForegroundColor Green
+    }
+    else {
+        Write-Host "✓ Exportando todos os emails do arquivo morto" -ForegroundColor Green
+    }
+}
 
 # Verifica se o arquivo morto existe
 if (-not (Test-ArchiveMailboxExists -UserEmail $Mailbox)) {
