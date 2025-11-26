@@ -1,4 +1,4 @@
-# Script para aplicar permissões eDiscovery sem confirmação interativa
+﻿# Script para aplicar permissões eDiscovery sem confirmação interativa
 param(
     [Parameter(Mandatory=$true)]
     [string]$UserEmail,
