@@ -1,4 +1,4 @@
-# Script para criar pesquisas de eDiscovery para exportação de arquivo morto
+﻿# Script para criar pesquisas de eDiscovery para exportação de arquivo morto
 # Método oficial: SearchExport (Compliance Search)
 
 <#
