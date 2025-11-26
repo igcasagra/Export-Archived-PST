@@ -720,8 +720,8 @@ Write-Host "`n╔═════════════════════
 Write-Host "║  Mailbox selecionada: $($Mailbox.PadRight(45))" -ForegroundColor Green
 Write-Host "╚════════════════════════════════════════════════════════════════╝" -ForegroundColor Green
 
-# Se veio do menu TOP N e OlderThanDays não foi especificado, pergunta ao usuário
-if ($ShowTop10 -and -not $PSBoundParameters.ContainsKey('OlderThanDays') -and -not $PSBoundParameters.ContainsKey('StartDate') -and -not $PSBoundParameters.ContainsKey('EndDate')) {
+# Se OlderThanDays não foi especificado via parâmetro, pergunta ao usuário
+if (-not $PSBoundParameters.ContainsKey('OlderThanDays') -and -not $PSBoundParameters.ContainsKey('StartDate') -and -not $PSBoundParameters.ContainsKey('EndDate')) {
     Write-Host ""
     Write-Host "Deseja filtrar emails por idade?" -ForegroundColor Yellow
     Write-Host "Digite o número de dias (ex: 365 para emails mais antigos que 1 ano)" -ForegroundColor White
